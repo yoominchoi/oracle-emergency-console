@@ -5,7 +5,7 @@ import time
 def init_db():
     dsn = cx_Oracle.makedsn("localhost", 1521, service_name="freepdb1")
     # connection = cx_Oracle.connect(user="myuser", password="yoominchoi1234A", dsn=dsn)
-    connection = cx_Oracle.connect(user="sys", password="yoominchoi1234A", dsn=dsn, mode=cx_Oracle.SYSDBA)
+    connection = cx_Oracle.connect(user="system", password="yoominchoi1234A", dsn=dsn)
     return connection
 
 # table exist?
