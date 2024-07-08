@@ -23,6 +23,26 @@ def ensure_table_exists(connection):
         """)
     connection.commit()
 
+# def update_user_status(connection, user_id, status, maybe_user):
+#     with connection.cursor() as cursor:
+#         cursor.execute("""
+#             UPDATE users SET status = :status, maybe_user = :maybe_user WHERE id = :user_id
+#         """, [status, maybe_user, user_id])
+#     connection.commit()
+
+# def update_people_status(connection, safe_user_count, unsafe_user_count, witness_users_count):
+#     with connection.cursor() as cursor:
+#         cursor.execute("""
+#             UPDATE people_status SET safe_user_count = :safe_user_count, unsafe_user_count = :unsafe_user_count, witness_users_count = :witness_users_count WHERE id = 1
+#         """, [safe_user_count, unsafe_user_count, witness_users_count])
+#     connection.commit()
+
+# def fetch_people_status(connection):
+#     with connection.cursor() as cursor:
+#         cursor.execute("SELECT safe_user_count, unsafe_user_count, witness_users_count FROM people_status WHERE id = 1")
+#         row = cursor.fetchone()
+#     return {"safe_user_count": row[0], "unsafe_user_count": row[1], "witness_users_count": row[2]} if row else None
+
 #Function to update the incident
 def update_incident(connection, location, user, note):
     with connection.cursor() as cursor:
