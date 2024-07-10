@@ -1,57 +1,37 @@
 import streamlit as st
-from common import init_db, ensure_table_exists, update_incident, fetch_incidents, fetch_latest_note
+from common import update_incident, fetch_incident, fetch_latest_note
 
-# initialize db and ensure table exists
-connection = init_db()
-ensure_table_exists(connection)
+# Sidebar for selecting user type
+user_type = st.sidebar.selectbox("Select User Type", ["Admin", "General User"])
 
-# streamlit ui
-st.title("Oracle Emergency Control Admin Page")
+if user_type == "Admin":
+    st.title("Admin Dashboard")
 
-#refresh every 5 secs
-st.markdown(
-    """
-    <script>
-    function refresh() {
-        window.location.reload();
-    }
-    setTimeout(refresh, 5000);
-    </script>
-    """,
-    unsafe_allow_html=True
-)
+    incident_id = st.sidebar.number_input('Incident ID', min_value=1)
+    
+    message = st.text_area("Send Message to General Users")
+    if st.button("Send"):
+        update_incident(incident_id, "alert_msg", message)
+        print(incident_id, message)
+        st.success("Message sent!")
 
-if "note" in st.session_state:
-    st.subheader("Latest Instructions or Notes")
-    st.write(st.session_state.note)
+    location = st.text_input("Update Shooter's Location")
+    if st.button("Update Location"):
+        update_incident(incident_id, "shooter_location", location)
+        st.success("Shooter's location updated!")
 
-latest_note = fetch_latest_note(connection)
-if latest_note:
-    st.subheader("Latest Instruction")
-    st.write(latest_note)
+    st.header("Messages to General Users")
+    messages = fetch_latest_note()
+    if messages:
+        st.write(messages)
+    else:
+        st.write("No messages available.")
 
-# display the incident updates in a table format
-st.subheader("Shooter Location Updates")
-incident_updates = fetch_incidents(connection)
-
-display_data = [
-    {
-        "location": update["location"],
-        "timestamp": update["timestamp"],
-        "updated_by": update["updated_by"]
-    } for update in incident_updates
-]
-
-st.table(display_data)
-
-
-st.subheader("Send Update")
-location = st.text_input("Enter Shooter Location (Building and Floor)")
-note = st.text_area("Enter Instructions")
-if st.button("Send Update"):
-    update_incident(connection, location, "Admin", note)
-    # st.session_state.note = note
-    st.success("Update sent successfully.")
-    st.rerun() # refresh (for update)
-
-connection.close()
+    st.header("Incident Details")
+    incident = fetch_incident()
+    if incident:
+        st.write(incident)
+    else:
+        st.write("No incident details available.")
+else:
+    st.write("Switch to general.py for General User functionalities.")
