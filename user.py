@@ -1,8 +1,9 @@
 import streamlit as st
-from common import update_incident, fetch_latest_note, fetch_shooter_location
+import pandas as pd
+from common import update_incident, fetch_incidents, fetch_shooter_location
 
 # Sidebar for selecting user
-user = st.sidebar.selectbox("Select User", ["General User 1", "General User 2"])
+user = st.sidebar.selectbox("Select User", ["John Smith", "Sarah Kim"])
 
 st.title(f"General User Dashboard - {user}")
 
@@ -21,8 +22,17 @@ else:
     st.write("No shooter location available.")
 
 st.header("Messages from Admin")
-messages = fetch_latest_note()
+messages = fetch_incidents()
 if messages:
-    st.write(messages)
+    for msg in messages:
+        st.write(f"{msg[0]} - {msg[1]}: {msg[2]} ({msg[3]})")
 else:
     st.write("No messages available.")
+
+st.header("Incident Details")
+incidents = fetch_incidents()
+if incidents:
+    df = pd.DataFrame(incidents, columns=["Timestamp", "Updated By", "Shooter Location", "Alert Message"])
+    st.table(df)
+else:
+    st.write("No incident details available.")
