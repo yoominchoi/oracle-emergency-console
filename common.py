@@ -30,15 +30,15 @@ def init_db():
         )
     """)
     
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS people_status (
-            incident_id NUMBER PRIMARY KEY REFERENCES incident(id),
-            safe_count NUMBER DEFAULT 0,
-            unsafe_count NUMBER DEFAULT 0,
-            witness_info_list CLOB,
-            urgent_list CLOB
-        )
-    """)
+    # cursor.execute("""
+    #     CREATE TABLE IF NOT EXISTS people_status (
+    #         incident_id NUMBER PRIMARY KEY REFERENCES incident(id),
+    #         safe_count NUMBER DEFAULT 0,
+    #         unsafe_count NUMBER DEFAULT 0,
+    #         witness_info_list CLOB,
+    #         urgent_list CLOB
+    #     )
+    # """)
     
     conn.commit()
     cursor.close()
@@ -98,13 +98,3 @@ def fetch_incidents():
     
     return rows
 
-def fetch_shooter_location(incident_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT shooter_location FROM incident WHERE id = :incident_id", incident_id=incident_id)
-    row = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    
-    return row[0] if row else None

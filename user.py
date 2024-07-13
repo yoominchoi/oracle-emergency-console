@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from common import fetch_users, update_incident, fetch_incidents, fetch_shooter_location
+from common import fetch_users, update_incident, fetch_incidents
 # import json
 
 # Sidebar for selecting user
