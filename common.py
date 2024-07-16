@@ -1,4 +1,5 @@
 import streamlit as st
+import matplotlib.pyplot as plt
 import cx_Oracle
 
 def get_db_connection():
@@ -108,11 +109,12 @@ def get_user_status(user_id):
     return result
     
 
-def get_overall_status(cursor):
+def get_people_status():
+    conn = get_db_connection()
+    cursor = conn.cursor()
     # Total # of users
     cursor.execute("SELECT COUNT(*) FROM users u WHERE u.user_type = 'G'")
     total_users = cursor.fetchone()
-    print('total_users', total_users[0])
 
     # Total # of safe users
     cursor.execute("""
@@ -121,7 +123,6 @@ def get_overall_status(cursor):
         WHERE u.user_type = 'G' and u.is_safe = 'Y'
     """)
     safe_count = cursor.fetchone()
-    print('safe_count', safe_count[0])
     
     # Total # of unsafe users
     cursor.execute("""
@@ -130,7 +131,14 @@ def get_overall_status(cursor):
         WHERE u.user_type = 'G' and u.is_safe = 'N'
     """)
     unsafe_count = cursor.fetchone()
-    print('unsafe_count', unsafe_count[0])
+
+    # rest of the users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_safe is null
+    """)
+    rest_safe_count = cursor.fetchone()
 
     # Total # of urgent users
     cursor.execute("""
@@ -139,7 +147,6 @@ def get_overall_status(cursor):
         WHERE u.user_type = 'G' and u.is_urgent = 'Y'
     """)
     urgent_count = cursor.fetchone()
-    print('urgent users', urgent_count[0])
 
     # Total # of not urgent users
     cursor.execute("""
@@ -148,23 +155,56 @@ def get_overall_status(cursor):
         WHERE u.user_type = 'G' and u.is_urgent = 'N'
     """)
     not_urgent_count = cursor.fetchone()
-    print('not urgent users', not_urgent_count[0])
+
+    # rest of the users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_urgent is null
+    """)
+    rest_urgent_count = cursor.fetchone()
+
+    result = [safe_count[0], unsafe_count[0], rest_safe_count[0], urgent_count[0], not_urgent_count[0], rest_urgent_count[0]]
+    return result
+
+def get_people_status_pie_chart(df):
+    fig, ax = plt.subplots(figsize=(1,1), facecolor='none')
+    colors = ['green','red','gray']
+    wedges, _ = ax.pie(df['Values'],colors=colors, radius=0.5, labels=['']*len(df))
+
+    ax.axis('equal')
+
+    legend_labels = [f'{cat}: {val}' for cat, val in zip(df['Category'], df['Values'])]
+    legend = ax.legend(wedges, legend_labels, title="People Safety Status", loc="center left", bbox_to_anchor=(1,0,0.5,1))
+
+    for text in legend.get_texts():
+        text.set_fontsize('small')
+        text.set_color('white')
+
+    legend.get_frame().set_facecolor('grey')
+
+    st.pyplot(fig)
 
 
 def update_incident(incident_id, user_id, column, value):
     conn = get_db_connection()
     cursor = conn.cursor()
     if value != '' and value != None and value != '<NA>':
-        if column == "shooter_location":
-            cursor.execute("""
-                INSERT INTO incident_details (incident_id, updated_by, shooter_location) 
+        if column == "shooter_location" or column == 'alert_msg' or column == 'shooter_desc':
+            query = f"""
+                INSERT INTO incident_details (incident_id, updated_by, {column}) 
                 VALUES (:incident_id, :user_id, :value)
-            """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
-        elif column == "alert_msg":
-            cursor.execute("""
-                INSERT INTO incident_details (incident_id, updated_by, alert_msg)
-                VALUES (:incident_id, :user_id, :value)
-            """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
+            """
+            cursor.execute(query, {'incident_id':incident_id, 'value':value, 'user_id':user_id})
+            # cursor.execute("""
+            #     INSERT INTO incident_details (incident_id, updated_by, {column}) 
+            #     VALUES (:incident_id, :user_id, :value)
+            # """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
+        # elif column == "alert_msg":
+        #     cursor.execute("""
+        #         INSERT INTO incident_details (incident_id, updated_by, alert_msg)
+        #         VALUES (:incident_id, :user_id, :value)
+        #     """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
         else:
             query = f"""
                 UPDATE incident_details 

@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from common import fetch_users, update_incident, fetch_incidents, update_user, get_user_status
+import matplotlib.pyplot as plt
+from common import fetch_users, update_incident, fetch_incidents, update_user, get_user_status, get_people_status, get_people_status_pie_chart
 # import json
 
 # Sidebar for selecting user
@@ -45,6 +46,20 @@ if user_type == 'A':
     else:
         st.write("No messages available.")
     
+    # People Status Pie Chart
+    result = get_people_status()
+
+    data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], 'Values': result[:3]}
+    df1 = pd.DataFrame(data1)
+    st.write("Safety check: ")
+    st.write(df1)
+    get_people_status_pie_chart(df1)
+    
+    data2 = {'Category': ['Urgent', 'Not urgent', 'Not responded'], 'Values': result[3:6]}
+    df2 = pd.DataFrame(data2)
+    st.write("People in Urgent Situation:")
+    st.write(df2)
+
     # Updating an alert message
     message = st.text_area("Send Message to General Users")
     if st.button("Send"):
@@ -94,9 +109,15 @@ elif user_type == 'G':
 
     # Updating Shooter's Location
     location = st.text_input("Update Shooter's Location")
-    if st.button("Update"):
+    if st.button("Update", key="location_update"):
         update_incident(incident_id, user_id, "shooter_location", location)
         st.success("Shooter's location updated!")
+
+    st.header("Witness shooter?")
+    shooter_desc = st.text_input("Update Shooter's Description")
+    if st.button("Update", key="shooter_desc_update"):
+        update_incident(incident_id, user_id, "shooter_desc", shooter_desc)
+        st.success("Shooter's description updated!")
 
     is_safe, is_urgent = get_user_status(user_id)
 
