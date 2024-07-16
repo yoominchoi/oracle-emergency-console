@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from common import fetch_users, update_incident, fetch_incidents, update_user
+from common import fetch_users, update_incident, fetch_incidents, update_user, get_user_status
 # import json
 
 # Sidebar for selecting user
@@ -98,20 +98,65 @@ elif user_type == 'G':
         update_incident(incident_id, user_id, "shooter_location", location)
         st.success("Shooter's location updated!")
 
+    is_safe, is_urgent = get_user_status(user_id)
+
+    # Style for buttons
+    button_style = """
+    <style>
+        .stButton>button {
+            background-color: lightgray;
+            color: black;
+        }
+        .stButton>button[data-selected="true"] {
+            background-color: green;
+            color: white;
+        }
+    </style>
+    """
+    st.markdown(button_style, unsafe_allow_html=True)
+
+    # Helper function to create buttons with state
+    def colored_button(label, key, selected):
+        button_html = f"""
+        <button data-selected="{selected}" onclick="window.location.href += '&{key}={label.lower()}'; return false;">
+            {label}
+        </button>
+        """
+        st.markdown(button_html, unsafe_allow_html=True)
+
     # Check if it is safe
     st.header("Safe?")
-    if st.button("safe_Yes"):
-        update_user(user_id, "is_safe", 'Y')
-        st.success("Safe count successful")
-    elif st.button("safe_No"):
-        update_user(user_id, "is_safe", 'N')
-        st.success("Unsafe count successful")
+    col1, col2 = st.columns(2)
+    with col1:
+        if is_safe == 'Y':
+            colored_button("Yes", key="safe_yes", selected="true")
+        else:
+            if st.button("Yes", key="safe_yes"):
+                update_user(user_id, "is_safe", 'Y')
+                st.experimental_rerun()
+    with col2:
+        if is_safe == 'N':
+            colored_button("No", key="safe_no", selected="true")
+        else:
+            if st.button("No", key="safe_no"):
+                update_user(user_id, "is_safe", 'N')
+                st.experimental_rerun()
 
-    # Check if it is urgent
-    st.header("Urgent?")
-    if st.button("urgent_Yes"):
-        update_user(user_id, "is_urgent", 'Y')
-        st.success("Safe count successful")
-    elif st.button("urgent_No"):
-        update_user(user_id, "is_urgent", 'N')
-        st.success("Unsafe count successful")
+    if is_safe == 'N':
+        # Check if it is urgent
+        st.header("Urgent?")
+        col3, col4 = st.columns(2)
+        with col3:
+            if is_urgent == 'Y':
+                colored_button("Yes", key="urgent_yes", selected="true")
+            else:
+                if st.button("Yes", key="urgent_yes"):
+                    update_user(user_id, "is_urgent", 'Y')
+                    st.experimental_rerun()
+        with col4:
+            if is_urgent == 'N':
+                colored_button("No", key="urgent_no", selected="true")
+            else:
+                if st.button("No", key="urgent_no"):
+                    update_user(user_id, "is_urgent", 'N')
+                    st.experimental_rerun()

@@ -91,28 +91,65 @@ def update_user(user_id, column, value):
             WHERE id = :user_id
         """
         cursor.execute(query, {'value': value, 'user_id': user_id})
-        
-        cursor.execute("SELECT COUNT(*) FROM users WHERE u.user_type = 'G")
-        total_users = cursor.fetchone()
-        print('total_users', total_users)
 
-        cursor.execute("""
-            SELECT COUNT(*)
-            FROM users u
-            WHERE u.user_type = 'G' and u.is_safe = 'Y'
-        """)
-        safe_count = cursor.fetchone()
-        print('safe_count', safe_count[0])
-        cursor.execute("""
-            SELECT COUNT(*)
-            FROM users u
-            WHERE u.user_type = 'G' and u.is_safe = 'N'
-        """)
-        unsafe_count = cursor.fetchone()
-        print('unsafe_count', unsafe_count[0])
+    get_overall_status(cursor)
+
     conn.commit()
     cursor.close()
     conn.close()
+
+def get_user_status(user_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT is_safe, is_urgent FROM users WHERE id = :user_id", {'user_id': user_id})
+    result = cursor.fetchone()
+    print('user_status', result[0])
+    conn.close()
+    return result
+    
+
+def get_overall_status(cursor):
+    # Total # of users
+    cursor.execute("SELECT COUNT(*) FROM users u WHERE u.user_type = 'G'")
+    total_users = cursor.fetchone()
+    print('total_users', total_users[0])
+
+    # Total # of safe users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_safe = 'Y'
+    """)
+    safe_count = cursor.fetchone()
+    print('safe_count', safe_count[0])
+    
+    # Total # of unsafe users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_safe = 'N'
+    """)
+    unsafe_count = cursor.fetchone()
+    print('unsafe_count', unsafe_count[0])
+
+    # Total # of urgent users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_urgent = 'Y'
+    """)
+    urgent_count = cursor.fetchone()
+    print('urgent users', urgent_count[0])
+
+    # Total # of not urgent users
+    cursor.execute("""
+        SELECT COUNT(*)
+        FROM users u
+        WHERE u.user_type = 'G' and u.is_urgent = 'N'
+    """)
+    not_urgent_count = cursor.fetchone()
+    print('not urgent users', not_urgent_count[0])
+
 
 def update_incident(incident_id, user_id, column, value):
     conn = get_db_connection()
@@ -128,22 +165,6 @@ def update_incident(incident_id, user_id, column, value):
                 INSERT INTO incident_details (incident_id, updated_by, alert_msg)
                 VALUES (:incident_id, :user_id, :value)
             """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
-        # elif column in ["safe_count", "unsafe_count"]:
-        #     if value == 1: # 1 = Yes (safe_count++), 0 = No (unsafe_count++)
-        #         cursor.execute("UPDATE incident_details SET safe_count = safe_count + 1")
-        #         print('successful')
-        #         query = f"""
-        #             UPDATE incident_details 
-        #             SET {column} = {column} + :value, updated_by = :user_id, timestamp = SYSTIMESTAMP
-        #             WHERE incident_id = :incident_id
-        #         """
-        #         cursor.execute(query, {'incident_id': incident_id, 'value':value, 'user_id':user_id})
-        #         # cursor.execute("""
-        #         #     SELECT SUM(safe_count)
-        #         #     FROM incident_details
-        #         # """)
-        #         # safe_count = cursor.fetchone()
-        #         # print('safe_count', safe_count[0])
         else:
             query = f"""
                 UPDATE incident_details 
