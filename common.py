@@ -1,5 +1,6 @@
 import streamlit as st
 import matplotlib.pyplot as plt
+import pandas as pd
 import cx_Oracle
 
 def get_db_connection():
@@ -48,8 +49,8 @@ def init_db():
     # """)
     
     conn.commit()
-    cursor.close()
-    conn.close()
+    # cursor.close()
+    # conn.close()
 
 def fetch_users():
     conn = get_db_connection()
@@ -93,7 +94,7 @@ def update_user(user_id, column, value):
         """
         cursor.execute(query, {'value': value, 'user_id': user_id})
 
-    get_overall_status(cursor)
+    get_people_status()
 
     conn.commit()
     cursor.close()
@@ -104,7 +105,6 @@ def get_user_status(user_id):
     cursor = conn.cursor()
     cursor.execute("SELECT is_safe, is_urgent FROM users WHERE id = :user_id", {'user_id': user_id})
     result = cursor.fetchone()
-    print('user_status', result[0])
     conn.close()
     return result
     
@@ -112,9 +112,9 @@ def get_user_status(user_id):
 def get_people_status():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Total # of users
-    cursor.execute("SELECT COUNT(*) FROM users u WHERE u.user_type = 'G'")
-    total_users = cursor.fetchone()
+    # # Total # of users
+    # cursor.execute("SELECT COUNT(*) FROM users u WHERE u.user_type = 'G'")
+    # total_users = cursor.fetchone()
 
     # Total # of safe users
     cursor.execute("""
@@ -140,41 +140,24 @@ def get_people_status():
     """)
     rest_safe_count = cursor.fetchone()
 
-    # Total # of urgent users
     cursor.execute("""
-        SELECT COUNT(*)
+        SELECT name, phone_num
         FROM users u
         WHERE u.user_type = 'G' and u.is_urgent = 'Y'
     """)
-    urgent_count = cursor.fetchone()
+    result = cursor.fetchall()
 
-    # Total # of not urgent users
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM users u
-        WHERE u.user_type = 'G' and u.is_urgent = 'N'
-    """)
-    not_urgent_count = cursor.fetchone()
-
-    # rest of the users
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM users u
-        WHERE u.user_type = 'G' and u.is_urgent is null
-    """)
-    rest_urgent_count = cursor.fetchone()
-
-    result = [safe_count[0], unsafe_count[0], rest_safe_count[0], urgent_count[0], not_urgent_count[0], rest_urgent_count[0]]
+    result = [safe_count[0], unsafe_count[0], rest_safe_count[0], result]
     return result
 
-def get_people_status_pie_chart(df):
+def get_safe_status_pie_chart(df):
     fig, ax = plt.subplots(figsize=(1,1), facecolor='none')
     colors = ['green','red','gray']
-    wedges, _ = ax.pie(df['Values'],colors=colors, radius=0.5, labels=['']*len(df))
+    wedges, _ = ax.pie(df['# of people'],colors=colors, radius=0.5, labels=['']*len(df))
 
     ax.axis('equal')
 
-    legend_labels = [f'{cat}: {val}' for cat, val in zip(df['Category'], df['Values'])]
+    legend_labels = [f'{cat}: {val}' for cat, val in zip(df['Category'], df['# of people'])]
     legend = ax.legend(wedges, legend_labels, title="People Safety Status", loc="center left", bbox_to_anchor=(1,0,0.5,1))
 
     for text in legend.get_texts():
@@ -196,10 +179,6 @@ def update_incident(incident_id, user_id, column, value):
                 VALUES (:incident_id, :user_id, :value)
             """
             cursor.execute(query, {'incident_id':incident_id, 'value':value, 'user_id':user_id})
-            # cursor.execute("""
-            #     INSERT INTO incident_details (incident_id, updated_by, {column}) 
-            #     VALUES (:incident_id, :user_id, :value)
-            # """, {'incident_id': incident_id, 'user_id': user_id, 'value': value})
         # elif column == "alert_msg":
         #     cursor.execute("""
         #         INSERT INTO incident_details (incident_id, updated_by, alert_msg)
@@ -213,7 +192,41 @@ def update_incident(incident_id, user_id, column, value):
             """
             cursor.execute(query, {'value':value, 'user_id':user_id})
     conn.commit()
-    cursor.close()
-    conn.close()
+    # cursor.close()
+    # conn.close()
     if value != '' and value != None and value != '<NA>':
         st.rerun()
+
+############# AI ########## (shooter description)
+def fetch_shooter_desc():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT shooter_desc from incident_details i WHERE i.shooter_desc is not null")
+    rows = cursor.fetchall()
+    cursor.close()
+    print('djkskkldfkldkldklds', [row[0] for row in rows])
+    return [row[0] for row in rows]
+
+def save_to_txt(data, file_path):
+    with open(file_path, 'w') as file:
+        for line in data:
+            file.write(f"{line}\n")
+
+def download_shooter_txt(data):
+    if data:
+        file_path = 'shooter_desc.txt'
+
+        save_to_txt(data, file_path)
+        st.write(f"Data saved to {file_path}")
+
+        # Provide the downloading link
+        with open(file_path, 'r') as file:
+            st.download_button('Download Text File', file, file_name=file_path)
+
+    else:
+        st.write("No data available")
+
+conn = get_db_connection()
+cursor = conn.cursor()
+cursor.close()
+conn.close()

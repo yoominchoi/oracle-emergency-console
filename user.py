@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from common import fetch_users, update_incident, fetch_incidents, update_user, get_user_status, get_people_status, get_people_status_pie_chart
+from common import fetch_shooter_desc, download_shooter_txt, fetch_users, update_incident, fetch_incidents, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
 # import json
 
 # Sidebar for selecting user
@@ -49,15 +49,14 @@ if user_type == 'A':
     # People Status Pie Chart
     result = get_people_status()
 
-    data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], 'Values': result[:3]}
+    data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], '# of people': result[:3]}
     df1 = pd.DataFrame(data1)
-    st.write("Safety check: ")
-    st.write(df1)
-    get_people_status_pie_chart(df1)
+    st.title("Safety check")
+    get_safe_status_pie_chart(df1)
+    # st.write(df1)
     
-    data2 = {'Category': ['Urgent', 'Not urgent', 'Not responded'], 'Values': result[3:6]}
-    df2 = pd.DataFrame(data2)
-    st.write("People in Urgent Situation:")
+    df2 = pd.DataFrame(result[3], columns=["Name", "Phone Number"])
+    st.title("Urgent List")
     st.write(df2)
 
     # Updating an alert message
@@ -72,10 +71,14 @@ if user_type == 'A':
         if user_id and incident_id and location:
             print('incident_id', incident_id)
             update_incident(incident_id, user_id, "shooter_location", location)
-            # update_shooter_location(user_id, incident_id, location)
             st.success("Shooter's location updated!")
         else:
             st.error("Error occurred.")
+
+    data = fetch_shooter_desc()
+
+    download_shooter_txt(data)
+    
 
 #######################
 # General User
