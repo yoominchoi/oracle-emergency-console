@@ -64,7 +64,6 @@ def authenticate_user(login_id, password):
     cursor.close()
     return user
 
-
 def fetch_users():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -215,6 +214,14 @@ def update_incident(incident_id, user_id, column, value):
     # conn.close()
     if value != '' and value != None and value != '<NA>':
         st.rerun()
+
+def check_login_id_exists(login_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users WHERE login_id=:1", (login_id,))
+    count = cursor.fetchone()[0]
+    cursor.close()
+    return count > 0
 
 ############# AI ########## (shooter description)
 def fetch_shooter_desc():

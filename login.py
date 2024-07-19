@@ -13,12 +13,10 @@ def main():
         if user:
             st.session_state.user = user
             st.success("Logged in successfully!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid ID or password.")
 
-    if st.button("Register"):
-        st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
