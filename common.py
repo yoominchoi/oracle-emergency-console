@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
 import cx_Oracle
+from transformers import pipeline
 
 def get_db_connection():
     dsn = cx_Oracle.makedsn("localhost", 1521, service_name="freepdb1")
@@ -39,31 +40,48 @@ def init_db():
         )
     """)
     
-    # cursor.execute("""
-    #     CREATE TABLE IF NOT EXISTS people_status (
-    #         incident_id NUMBER PRIMARY KEY REFERENCES incidents(id),
-    #         safe_count NUMBER DEFAULT 0,
-    #         unsafe_count NUMBER DEFAULT 0,
-    #         urgent_list CLOB
-    #     )
-    # """)
-    
     conn.commit()
-    # cursor.close()
-    # conn.close()
+    cursor.close()
+
+@st.cache_data
+def register_user(login_id, password, user_type, name, phone_num):
+    conn = get_db_connection()
+    user_type_map = {
+        'General': 'G',
+        'Admin': 'A'
+    }
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO users (login_id, password, user_type, name, phone_num) VALUES (:1, :2, :3, :4, :5)", 
+                   (login_id, password, user_type_map[user_type], name, phone_num))
+    conn.commit()
+    cursor.close()
+
+def authenticate_user(login_id, password):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name, user_type FROM users WHERE login_id=:1 AND password=:2", (login_id, password))
+    user = cursor.fetchone()
+    cursor.close()
+    return user
+
 
 def fetch_users():
     conn = get_db_connection()
     cursor = conn.cursor()
-
-    cursor.execute("SELECT id, name, user_type FROM users")
-    rows = cursor.fetchall()
+    cursor.execute("SELECT login_id, name, phone_num, user_type FROM users")
+    users = cursor.fetchall()
     cursor.close()
-    conn.close()
-
-    return rows
+    return users
 
 def fetch_incidents():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, incident_desc, incident_status FROM incidents")
+    incidents = cursor.fetchall()
+    cursor.close()
+    return incidents
+
+def fetch_incident_details(incident_id):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -71,8 +89,9 @@ def fetch_incidents():
         SELECT i.timestamp, u.name as updated_by, i.shooter_location, i.alert_msg 
         FROM incident_details i 
         LEFT JOIN users u ON i.updated_by = u.id 
+        WHERE incident_id=:1
         ORDER BY i.timestamp DESC
-    """)
+    """, (incident_id, ))
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -98,7 +117,7 @@ def update_user(user_id, column, value):
 
     conn.commit()
     cursor.close()
-    conn.close()
+    # conn.close()
 
 def get_user_status(user_id):
     conn = get_db_connection()
@@ -204,13 +223,13 @@ def fetch_shooter_desc():
     cursor.execute("SELECT shooter_desc from incident_details i WHERE i.shooter_desc is not null")
     rows = cursor.fetchall()
     cursor.close()
-    print('djkskkldfkldkldklds', [row[0] for row in rows])
     return [row[0] for row in rows]
 
 def save_to_txt(data, file_path):
     with open(file_path, 'w') as file:
         for line in data:
             file.write(f"{line}\n")
+
 
 def download_shooter_txt(data):
     if data:
@@ -226,7 +245,4 @@ def download_shooter_txt(data):
     else:
         st.write("No data available")
 
-conn = get_db_connection()
-cursor = conn.cursor()
-cursor.close()
-conn.close()
+init_db()
