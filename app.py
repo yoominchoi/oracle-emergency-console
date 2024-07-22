@@ -2,6 +2,7 @@ import streamlit as st
 import register
 import login
 import dashboard
+# import create
 
 def main():
     if "user" not in st.session_state:
@@ -23,7 +24,16 @@ def main():
             elif page == "Register":
                 register.main()
     else:
+        # st.sidebar.title("Navigation")
+        # page = st.sidebar.radio("Go to", ["Dashboard", "Report a New Incident" ])
+        # if page == "Report a New Incident":
+        #     create.main()
+        # else:
+            # query_params = st.query_params()
+            # if "incident_id" in query_params:
         dashboard.main()
+
+
 
 if __name__ == '__main__':
     main()

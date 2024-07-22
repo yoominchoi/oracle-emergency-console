@@ -1,7 +1,10 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from common import fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
+from common import fetch_new_alert_msg, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
+# import create
+from datetime import datetime
+import time
 # import json
 
 # Sidebar for selecting user
@@ -11,20 +14,23 @@ def main():
     if "user" not in st.session_state:
         st.error("Please log in first.")
         st.rerun()
+        # st.stop()
+    
+    # query_params = st.query_params()
+    # incident_id = query_params.get("incident_id")
+    # if not incident_id:
+    #     st.error("No incident ID provided")
+    #     st.stop()
+
 
     user = st.session_state.user
     ######################################################################################################
     # user - ((id) 1, (name) 'Katrina Wilson', (user_type) 'A')
-    st.title(f"Welcome {user[1]}")
-    
     ######################################################################################################
     # Admin User
-    if user[2] == 'A':
-        print('useruseruseruseruseruseruser', user)
-        st.write("You have admin priveleges.")
-        
+    if user[2] == 'A':        
         # if user_type == 'A':
-        st.title("Admin Dashboard")
+        st.title(f"Admin Dashboard for {user[1]}")
 
         st.sidebar.title("Incidents")
         incidents = fetch_incidents()
@@ -32,15 +38,17 @@ def main():
         if incidents:
             incident_ids = [str(incident[0]) for incident in incidents]
             selected_incident_id = st.sidebar.selectbox("Select Incident", incident_ids)
-        
+            # Adding an incident
+            # if st.sidebar.button("Add incident"):
+            #     create.main()
+            # else:
             if selected_incident_id:
                 incident_details = fetch_incident_details(selected_incident_id)
                 if incident_details:
-
                     # Incident Details
                     st.header("Incident Details")
                     # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
-                    df = pd.DataFrame(incident_details, columns=["Timestamp", "Updated By", "Shooter Location", "Alert Message"])
+                    df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
                     df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null
                     df.drop(columns=['Alert Message'], axis=1, inplace=True)
                     if not df.empty:
@@ -49,6 +57,19 @@ def main():
                         st.write("No incident details available.")
                 else:
                     st.write("No incident details available.")
+
+                # People Status Pie Chart
+                result = get_people_status()
+
+                data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], '# of people': result[:3]}
+                df1 = pd.DataFrame(data1)
+                st.header("Safety check")
+                get_safe_status_pie_chart(df1)
+
+                # Urgent List
+                st.header("Urgent List")
+                df2 = pd.DataFrame(result[3], columns=["Name", "Phone Number"])
+                st.write(df2)
 
                 # Already sent message
                 st.header("Messages to Users")
@@ -62,19 +83,6 @@ def main():
                     st.write(f"{msg[3]} ({msg[0]})")
                 else:
                     st.write("No messages available.")
-                
-                # People Status Pie Chart
-                result = get_people_status()
-
-                data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], '# of people': result[:3]}
-                df1 = pd.DataFrame(data1)
-                st.title("Safety check")
-                get_safe_status_pie_chart(df1)
-                # st.write(df1)
-                
-                df2 = pd.DataFrame(result[3], columns=["Name", "Phone Number"])
-                st.title("Urgent List")
-                st.write(df2)
 
                 # Updating an alert message
                 message = st.text_area("Send Message to General Users")
@@ -83,7 +91,7 @@ def main():
                     st.success("Message sent!")
                 
                 # Updating shooter's location
-                location = st.text_input("Update Shooter's Location")
+                location = st.text_input("Update Location of the Shooter")
                 if st.button("Update Location"):
                     if user[0] and selected_incident_id and location:
                         print('incident_id', selected_incident_id)
@@ -104,7 +112,7 @@ def main():
     ######################################################################################################
     # General User
     elif user[2] == 'G':
-        st.title(f"General User {user[1]}")
+        st.title(f"Incident Details for {user[1]}")
 
         st.sidebar.title("Incidents")
         incidents = fetch_incidents()
@@ -116,10 +124,44 @@ def main():
             if selected_incident_id:
                 incident_details = fetch_incident_details(selected_incident_id)
                 if incident_details:
-                    # Incident Details
-                    st.header("Incident Details")
+                    
+                    # Message from Admin
+                    messages = fetch_incident_details(selected_incident_id)
+
+                    # placeholder = st.empty()
+                    # last_checked_time = datetime.now()
+
+                    # while True:
+                    #     new_alerts = fetch_new_alert_msg(last_checked_time)
+                    #     if new_alerts:
+                    #         last_checked_time = new_alerts[0][1]
+                    #         with placeholder.container():
+                    #             for alert, alert_time in new_alerts:
+                    #                 st.toast(f"### **Alert:** {alert} (Received at {alert_time})")
+                    #     time.sleep(5)
+                    #     st.rerun()
+                    
+                    # find the most recent message that is not null
+                    # placeholder = st.empty()
+                    # last_alert = None
+
+                    # while True:
+                    messages = fetch_incident_details(selected_incident_id)
+
+                    for msg in messages:
+                        if msg[3] is not None:
+                            msg = msg
+                            break
+                    if msg:
+                        st.header(f"{msg[3]}")
+                        st.write(f"({msg[0]})")
+                    else:
+                        st.write("No messages available.")
+
+                    # Shooter's Location
+                    st.header("Shooter's Location")
                     # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
-                    df = pd.DataFrame(incident_details, columns=["Timestamp", "Updated By", "Shooter Location", "Alert Message"])
+                    df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
                     df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null
                     df.drop(columns=['Alert Message'], axis=1, inplace=True)
                     df.drop(columns=['Updated By'], axis=1, inplace=True)
@@ -130,18 +172,9 @@ def main():
                 else:
                     st.write("No incident details available.")
 
+
                 # Message from Admin
-                st.header("Messages from Admin")
-                messages = fetch_incident_details(selected_incident_id)
-                # find the most recent message that is not null
-                for msg in messages:
-                    if msg[3] is not None:
-                        msg = msg
-                        break
-                if msg:
-                    st.write(f"{msg[3]} ({msg[0]})")
-                else:
-                    st.write("No messages available.")
+                # st.header("Messages from Admin")
 
                 # Updating Shooter's Location
                 location = st.text_input("Update Shooter's Location")
@@ -149,7 +182,7 @@ def main():
                     update_incident(selected_incident_id, user[0], "shooter_location", location)
                     st.success("Shooter's location updated!")
 
-                st.header("Witness shooter?")
+                st.header("Witnessed shooter?")
                 shooter_desc = st.text_input("Update Shooter's Description")
                 if st.button("Update", key="shooter_desc_update"):
                     update_incident(selected_incident_id, user[0], "shooter_desc", shooter_desc)
@@ -220,6 +253,8 @@ def main():
             else:
                 st.sidebar.write("No incidents available.")
 
+    time.sleep(5)
+    st.rerun()
 
 if __name__ == "__main__":
     main()
