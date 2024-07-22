@@ -14,14 +14,6 @@ def main():
     if "user" not in st.session_state:
         st.error("Please log in first.")
         st.rerun()
-        # st.stop()
-    
-    # query_params = st.query_params()
-    # incident_id = query_params.get("incident_id")
-    # if not incident_id:
-    #     st.error("No incident ID provided")
-    #     st.stop()
-
 
     user = st.session_state.user
     ######################################################################################################
@@ -128,26 +120,6 @@ def main():
                     # Message from Admin
                     messages = fetch_incident_details(selected_incident_id)
 
-                    # placeholder = st.empty()
-                    # last_checked_time = datetime.now()
-
-                    # while True:
-                    #     new_alerts = fetch_new_alert_msg(last_checked_time)
-                    #     if new_alerts:
-                    #         last_checked_time = new_alerts[0][1]
-                    #         with placeholder.container():
-                    #             for alert, alert_time in new_alerts:
-                    #                 st.toast(f"### **Alert:** {alert} (Received at {alert_time})")
-                    #     time.sleep(5)
-                    #     st.rerun()
-                    
-                    # find the most recent message that is not null
-                    # placeholder = st.empty()
-                    # last_alert = None
-
-                    # while True:
-                    messages = fetch_incident_details(selected_incident_id)
-
                     for msg in messages:
                         if msg[3] is not None:
                             msg = msg
@@ -160,7 +132,9 @@ def main():
 
                     # Shooter's Location
                     st.header("Shooter's Location")
+                    ######################################################################################################
                     # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
+                    ######################################################################################################
                     df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
                     df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null
                     df.drop(columns=['Alert Message'], axis=1, inplace=True)
@@ -171,10 +145,6 @@ def main():
                         st.write("No incident details available.")
                 else:
                     st.write("No incident details available.")
-
-
-                # Message from Admin
-                # st.header("Messages from Admin")
 
                 # Updating Shooter's Location
                 location = st.text_input("Update Shooter's Location")
