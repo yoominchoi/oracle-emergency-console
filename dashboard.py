@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from common import fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
+from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
 # import create
 from datetime import datetime
 import time
@@ -20,9 +20,8 @@ def main():
     # user - ((id) 1, (name) 'Katrina Wilson', (user_type) 'A')
     ######################################################################################################
     # Admin User
-    if user[2] == 'A':        
-        # if user_type == 'A':
-        st.title(f"Admin {user[1]} Dashboard")
+    if user[2] == 'A':     
+        st.title(f"Admin {user[1]}'s Dashboard")
 
         st.sidebar.title("Incidents")
         incidents = fetch_incidents()
@@ -30,82 +29,94 @@ def main():
         if incidents:
             incident_ids = [str(incident[0]) for incident in incidents]
             selected_incident_id = st.sidebar.selectbox("Select Incident", incident_ids)
-            # Adding an incident
-            # if st.sidebar.button("Add incident"):
-            #     create.main()
-            # else:
             if selected_incident_id:
                 incident_details = fetch_incident_details(selected_incident_id)
-                if incident_details:                    
-                    # Shooter's Final Description
-                    st.header("Shooter's Description")
-                    final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
-                    st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
+                if incident_details:
+                    admin_col1, admin_col2 = st.columns(2)                    
                     
-                    # Download text file of shooter's descriptions
-                    data = fetch_shooter_desc()
-                    download_shooter_txt(data)
+                    with admin_col1:
+                        # Send Alert Messages to Users
+                        st.header("Send Alert Messages to Users")
+                        messages = fetch_incident_details(selected_incident_id)
+                        # find the most recent message that is not null
+                        for msg in messages:
+                            if msg[3] is not None:
+                                msg = msg
+                                break
+                        if msg:
+                            highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({msg[0]})</span>'
+                            st.markdown(highlighted_msg_text, unsafe_allow_html=True)
+                        else:
+                            st.write("No messages available.")
+
+                        # Updating an alert message
+                        message = st.text_area("Send Message to Users")
+                        if st.button("Send"):
+                            update_incident(1, user[0], "alert_msg", message)
+                            st.success("Message sent!")
+                        
+                        # Shooter's Final Description
+                        st.header("Send Updated Shooter's Description")
+                        final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
+                        # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
+                        highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {str(final_shooter_desc[1])})</span>'
+                        st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
+                        # Download text file of shooter's descriptions + Instruction
+                        data = fetch_shooter_desc()
+                        download_shooter_txt(data)
+
+                        new_final_shooter_desc = st.text_input("Please do not update the final description if you did not follow the instruction above. \n Update the final description of the shooter.")
+                        if st.button("Update", key="admin_update_final_shooter_desc"):
+                            if user[0] and selected_incident_id and new_final_shooter_desc:
+                                update_final_shooter_desc(selected_incident_id, user[0], new_final_shooter_desc)
+                                st.success("Shooter's final description updated.")
+                                st.rerun()
+
+                        # Shooter's Location
+                        st.header("Add Shooter's Location & Description")
+                        # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
+                        df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
+                        df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null
+                        df.drop(columns=['Alert Message'], axis=1, inplace=True)
+                        if not df.empty:
+                            st.table(df.head(3))
+                            # Adding shooter's location
+                            location = st.text_input("Add Shooter's Location")
+                            if st.button("Add", key="admin_add_location"):
+                                if user[0] and selected_incident_id and location:
+                                    print('incident_id', selected_incident_id)
+                                    update_incident(selected_incident_id, user[0], "shooter_location", location)
+                                    st.success("Shooter's location updated!")
+                                else:
+                                    st.error("Error occurred.")
+                            
+                            # Adding shooter's description
+                            shooter_desc = st.text_input("Add Shooter's Description")
+                            if st.button("Add", key="admin_add_shooter_desc"):
+                                update_incident(selected_incident_id, user[0], "shooter_desc", shooter_desc)
+                                st.success("Shooter's description updated!")
+                        else:
+                            st.write("No incident details available.")
                     
-                    # Shooter's Location
-                    st.header("Shooter's Location")
-                    # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
-                    df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
-                    df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null
-                    df.drop(columns=['Alert Message'], axis=1, inplace=True)
-                    if not df.empty:
-                        st.table(df.head(3))
-                    else:
-                        st.write("No incident details available.")
+                    with admin_col2:
+                        # People Status Pie Chart
+                        result = get_people_status()
+
+                        data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], '# of people': result[:3]}
+                        df1 = pd.DataFrame(data1)
+                        st.header("Safety Status Check")
+                        get_safe_status_pie_chart(df1)
+
+                        # Urgent List
+                        st.header("Urgent List")
+                        df2 = pd.DataFrame(result[3], columns=["Name", "Phone Number"])
+                        st.write(df2)
                 else:
                     st.write("No incident details available.")
-
-                # People Status Pie Chart
-                result = get_people_status()
-
-                data1 = {'Category': ['Safe', 'Unsafe', 'Not responded'], '# of people': result[:3]}
-                df1 = pd.DataFrame(data1)
-                st.header("Safety check")
-                get_safe_status_pie_chart(df1)
-
-                # Urgent List
-                st.header("Urgent List")
-                df2 = pd.DataFrame(result[3], columns=["Name", "Phone Number"])
-                st.write(df2)
-
-                # Already sent message
-                st.header("Messages to Users")
-                messages = fetch_incident_details(selected_incident_id)
-                # find the most recent message that is not null
-                for msg in messages:
-                    if msg[3] is not None:
-                        msg = msg
-                        break
-                if msg:
-                    st.write(f"{msg[3]} ({msg[0]})")
-                else:
-                    st.write("No messages available.")
-
-                # Updating an alert message
-                message = st.text_area("Send Message to General Users")
-                if st.button("Send"):
-                    update_incident(1, user[0], "alert_msg", message)
-                    st.success("Message sent!")
-                
-                # Updating shooter's location
-                location = st.text_input("Update Location of the Shooter")
-                if st.button("Update Location"):
-                    if user[0] and selected_incident_id and location:
-                        print('incident_id', selected_incident_id)
-                        update_incident(selected_incident_id, user[0], "shooter_location", location)
-                        st.success("Shooter's location updated!")
-                    else:
-                        st.error("Error occurred.")
-
-                # Updating shooter's description
-                shooter_desc = st.text_input("Update Shooter's Description")
-                if st.button("Update", key="shooter_desc_update"):
-                    update_incident(selected_incident_id, user[0], "shooter_desc", shooter_desc)
-                    st.success("Shooter's description updated!")
+            else:
+                st.write("No incident available.")
+        else:
+            st.write("No incident available.")
 
     ######################################################################################################
     # General User
@@ -227,6 +238,8 @@ def main():
                                 update_user(user[0], "is_urgent", 'N')
                                 st.rerun()
             else:
+                st.sidebar.write("No incident details available.")
+        else:
                 st.sidebar.write("No incidents available.")
 
     time.sleep(5)

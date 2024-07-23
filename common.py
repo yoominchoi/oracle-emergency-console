@@ -270,16 +270,7 @@ def save_to_txt(data, file_path):
 
 
 def download_shooter_txt(data):
-    if data:
-        file_path = 'shooter_desc.txt'
-
-        save_to_txt(data, file_path)
-        # st.write(f"Shooter's descriptions data saved to {file_path}")
-
-        # Provide the downloading link
-        with open(file_path, 'r') as file:
-            st.download_button('Download Shooter Description Text File', file, file_name=file_path)
-        
+    if data:        
         instruction = """
                 1) Open a new terminal and run commands below to open Jupyter Notebook.
                 > ssh -L 8888:localhost:8888 -i <<ssh key file location>> opc@<<public IP Address>>
@@ -290,9 +281,17 @@ def download_shooter_txt(data):
                 3) Run 'vectorization.ipynb' file.
                 4) Copy the result at the end and update the shooter's description in the box below.
                  """
-        with st.expander("Instruction to get an updated shooter's final description:"):
+        with st.expander("Instruction to get an updated shooter's final description:", expanded=True):
             st.write(instruction)
 
+        file_path = 'shooter_desc.txt'
+
+        save_to_txt(data, file_path)
+        # st.write(f"Shooter's descriptions data saved to {file_path}")
+
+        # Provide the downloading link
+        with open(file_path, 'r') as file:
+            st.download_button('Download Shooter Description Text File', file, file_name=file_path)
 
         # st.write("""
         #         Instruction to get an updated shooter's final description:
@@ -318,7 +317,6 @@ def update_final_shooter_desc(incident_id, user_id, value):
 def fetch_final_shooter_desc(incident_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-
     cursor.execute("SELECT final_shooter_desc, reported_time FROM incident_details WHERE incident_id=:1 AND final_shooter_desc is NOT NULL ORDER BY reported_time DESC", (incident_id, ))
     rows = cursor.fetchone()
     cursor.close()
