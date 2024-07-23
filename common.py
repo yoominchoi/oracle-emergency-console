@@ -277,6 +277,7 @@ def fetch_shooter_desc():
 
 def save_to_txt(data, file_path):
     with open(file_path, 'w') as file:
+        file.write("These are descriptions of a shooter or shooters.\n")
         for line in data:
             file.write(f"{line}\n")
 
