@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-from common import fetch_new_alert_msg, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
+from common import fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
 # import create
 from datetime import datetime
 import time
@@ -36,9 +36,15 @@ def main():
             # else:
             if selected_incident_id:
                 incident_details = fetch_incident_details(selected_incident_id)
-                if incident_details:
-                    # Incident Details
-                    st.header("Incident Details")
+                if incident_details:                    
+                    # Shooter's Final Description
+                    st.header("Shooter's Description")
+                    final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
+                    st.write(final_shooter_desc[0])
+                    st.write("Last updated: " + str(final_shooter_desc[1]))
+                    
+                    # Shooter's Location
+                    st.header("Shooter's Location")
                     # incident[0]: timestamp, incident[1]: updated_by, incident[2]: shooter_location, incident[3]: alert_msg
                     df = pd.DataFrame(incident_details, columns=["Reported Time", "Updated By", "Shooter Location", "Alert Message"])
                     df = df[df["Shooter Location"].notnull()]  # Filter out rows where Shooter Location is null

@@ -216,19 +216,6 @@ def update_incident(incident_id, user_id, column, value):
     if value != '' and value != None and value != '<NA>':
         st.rerun()
 
-def fetch_new_alert_msg(last_checked_time):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT alert_msg, reported_time
-        FROM incidents
-        WHERE reported_time > :1 AND alert_msg IS NOT NULL
-        ORDER BY reported_time DESC
-    """, (last_checked_time,))
-    alerts = cursor.fetchall()
-    cursor.close()
-    return alerts
-
 
 def check_login_id_exists(login_id):
     conn = get_db_connection()
@@ -295,5 +282,26 @@ def download_shooter_txt(data):
 
     else:
         st.write("No data available")
+
+def update_final_shooter_desc(incident_id, user_id, value):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if value != '' and value != None and value != '<NA>':
+        query = f"""
+            INSERT INTO incident_details (incident_id, updated_by, final_shooter_desc)
+            VALUES (:incident_id, :user_id, :value)
+        """
+        cursor.execute(query, {'incident_id':incident_id, 'value':value, 'user_id': user_id})
+    conn.commit()
+
+def fetch_final_shooter_desc(incident_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT final_shooter_desc, reported_time FROM incident_details WHERE incident_id=:1 AND final_shooter_desc is NOT NULL ORDER BY reported_time DESC", (incident_id, ))
+    rows = cursor.fetchone()
+    print(rows)
+    cursor.close()
+    return rows
 
 init_db()
