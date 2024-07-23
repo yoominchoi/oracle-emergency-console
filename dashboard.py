@@ -22,7 +22,7 @@ def main():
     # Admin User
     if user[2] == 'A':        
         # if user_type == 'A':
-        st.title(f"Admin Dashboard for {user[1]}")
+        st.title(f"Admin {user[1]} Dashboard")
 
         st.sidebar.title("Incidents")
         incidents = fetch_incidents()
@@ -40,8 +40,11 @@ def main():
                     # Shooter's Final Description
                     st.header("Shooter's Description")
                     final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
-                    st.write(final_shooter_desc[0])
-                    st.write("Last updated: " + str(final_shooter_desc[1]))
+                    st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
+                    
+                    # Download text file of shooter's descriptions
+                    data = fetch_shooter_desc()
+                    download_shooter_txt(data)
                     
                     # Shooter's Location
                     st.header("Shooter's Location")
@@ -103,9 +106,6 @@ def main():
                 if st.button("Update", key="shooter_desc_update"):
                     update_incident(selected_incident_id, user[0], "shooter_desc", shooter_desc)
                     st.success("Shooter's description updated!")
-                data = fetch_shooter_desc()
-
-                download_shooter_txt(data)
 
     ######################################################################################################
     # General User
