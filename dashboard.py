@@ -1,14 +1,7 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
-# import create
-from datetime import datetime
 import time
-# import json
-
-# Sidebar for selecting user
-# user = st.sidebar.selectbox("Select User", ["John Smith", "Sarah Kim"])
 
 def main():
     if "user" not in st.session_state:
@@ -17,7 +10,7 @@ def main():
 
     user = st.session_state.user
     ######################################################################################################
-    # user - ((id) 1, (name) 'Katrina Wilson', (user_type) 'A')
+    # user information - ((id) 1, (name) 'Katrina Wilson', (user_type) 'A')
     ######################################################################################################
     # Admin User
     if user[2] == 'A':     
@@ -38,7 +31,7 @@ def main():
                         # Send Alert Messages to Users
                         st.header("Send Alert Messages")
                         messages = fetch_incident_details(selected_incident_id)
-                        # find the most recent message that is not null
+                        # Find the most recent message that is not null
                         for msg in messages:
                             if msg[3] is not None:
                                 msg = msg
