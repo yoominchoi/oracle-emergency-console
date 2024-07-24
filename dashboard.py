@@ -36,7 +36,7 @@ def main():
                     
                     with admin_col1:
                         # Send Alert Messages to Users
-                        st.header("Send Alert Messages to Users")
+                        st.header("Send Alert Messages")
                         messages = fetch_incident_details(selected_incident_id)
                         # find the most recent message that is not null
                         for msg in messages:
@@ -56,7 +56,7 @@ def main():
                             st.success("Message sent!")
                         
                         # Shooter's Final Description
-                        st.header("Send Updated Shooter's Description")
+                        st.header("Send Final Shooter's Description")
                         final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
                         # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
                         highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {str(final_shooter_desc[1])})</span>'
@@ -84,7 +84,6 @@ def main():
                             location = st.text_input("Add Shooter's Location")
                             if st.button("Add", key="admin_add_location"):
                                 if user[0] and selected_incident_id and location:
-                                    print('incident_id', selected_incident_id)
                                     update_incident(selected_incident_id, user[0], "shooter_location", location)
                                     st.success("Shooter's location updated!")
                                 else:
@@ -97,7 +96,7 @@ def main():
                                 st.success("Shooter's description updated!")
                         else:
                             st.write("No incident details available.")
-                    
+
                     with admin_col2:
                         # People Status Pie Chart
                         result = get_people_status()
@@ -125,7 +124,6 @@ def main():
 
         st.sidebar.title("Incidents")
         incidents = fetch_incidents()
-        print(incidents)
         if incidents:
             incident_ids = [str(incident[0]) for incident in incidents]
             selected_incident_id = st.sidebar.selectbox("Select Incident", incident_ids)
@@ -142,10 +140,18 @@ def main():
                             msg = msg
                             break
                     if msg:
-                        st.header(f"{msg[3]}")
-                        st.write(f"({msg[0]})")
+                        st.header('Alert Message from Admin')
+                        highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({msg[0]})</span>'
+                        st.markdown(highlighted_msg_text, unsafe_allow_html=True)
                     else:
                         st.write("No messages available.")
+
+                    # Shooter's Final Description
+                    st.header('Updated Shooter Final Description')
+                    final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
+                    # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
+                    highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {str(final_shooter_desc[1])})</span>'
+                    st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
 
                     # Shooter's Location
                     st.header("Shooter's Location")
@@ -242,7 +248,7 @@ def main():
         else:
                 st.sidebar.write("No incidents available.")
 
-    time.sleep(5)
+    time.sleep(10)
     st.rerun()
 
 if __name__ == "__main__":
