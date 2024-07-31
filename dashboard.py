@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
+from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user_status, get_user_status, get_people_status, get_safe_status_pie_chart
 import time
 from datetime import datetime
 
@@ -217,14 +217,14 @@ def main():
                         colored_button("Yes", key="safe_yes", selected="true")
                     else:
                         if st.button("Yes", key="safe_yes"):
-                            update_user(user[0], "is_safe", 'Y')
+                            update_user_status(user[0], "is_safe", 'Y')
                             st.rerun()
                 with col2:
                     if is_safe == 'N':
                         colored_button("No", key="safe_no", selected="true")
                     else:
                         if st.button("No", key="safe_no"):
-                            update_user(user[0], "is_safe", 'N')
+                            update_user_status(user[0], "is_safe", 'N')
                             st.rerun()
 
                 if is_safe == 'N':
@@ -236,14 +236,14 @@ def main():
                             colored_button("Yes", key="urgent_yes", selected="true")
                         else:
                             if st.button("Yes", key="urgent_yes"):
-                                update_user(user[0], "is_urgent", 'Y')
+                                update_user_status(user[0], "is_urgent", 'Y')
                                 st.rerun()
                     with col4:
                         if is_urgent == 'N':
                             colored_button("No", key="urgent_no", selected="true")
                         else:
                             if st.button("No", key="urgent_no"):
-                                update_user(user[0], "is_urgent", 'N')
+                                update_user_status(user[0], "is_urgent", 'N')
                                 st.rerun()
             else:
                 st.sidebar.write("No incident details available.")

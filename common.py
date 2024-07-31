@@ -8,6 +8,7 @@ def get_db_connection():
     conn = oracledb.connect(user="user1", password="yoominchoi1234A", dsn=dsn)
     return conn
 
+# User & Authentication (Register/Login)
 @st.cache_data
 def register_user(login_id, password, user_type, name, phone_num):
     conn = get_db_connection()
@@ -29,6 +30,14 @@ def authenticate_user(login_id, password):
     cursor.close()
     return user
 
+def check_login_id_exists(login_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM users WHERE login_id=:1", (login_id,))
+    count = cursor.fetchone()[0]
+    cursor.close()
+    return count > 0
+
 def fetch_users():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -37,6 +46,7 @@ def fetch_users():
     cursor.close()
     return users
 
+# Incidents
 def fetch_incidents():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -58,11 +68,31 @@ def fetch_incident_details(incident_id):
     """, (incident_id, ))
     rows = cursor.fetchall()
     cursor.close()
-    # conn.close()
-    
     return rows
 
-def update_user(user_id, column, value):
+def update_incident(incident_id, user_id, column, value):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if value != '' and value != None and value != '<NA>':
+        if column == "alert_msg" or column == "shooter_location" or column == 'shooter_desc':
+            query = f"""
+                INSERT INTO incident_details (incident_id, updated_by, {column}) 
+                VALUES (:incident_id, :user_id, :value)
+            """
+            cursor.execute(query, {'incident_id':incident_id, 'value':value, 'user_id':user_id})
+        else:
+            query = f"""
+                UPDATE incident_details 
+                SET {column} = :value, updated_by = :user_id, tireported_timemestamp = SYSTIMESTAMP
+                WHERE id = (SELECT id FROM incident_details WHERE rownum = 1 ORDER BY reported_time DESC)
+            """
+            cursor.execute(query, {'value':value, 'user_id':user_id})
+    conn.commit()
+    if value != '' and value != None and value != '<NA>':
+        st.rerun()
+
+# User status update (is_safe, is_urgent)
+def update_user_status(user_id, column, value):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -90,7 +120,6 @@ def get_user_status(user_id):
     result = cursor.fetchone()
     conn.close()
     return result
-    
 
 def get_people_status():
     conn = get_db_connection()
@@ -148,38 +177,7 @@ def get_safe_status_pie_chart(df):
     st.pyplot(fig)
 
 
-def update_incident(incident_id, user_id, column, value):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    if value != '' and value != None and value != '<NA>':
-        if column == "alert_msg" or column == "shooter_location" or column == 'shooter_desc':
-            query = f"""
-                INSERT INTO incident_details (incident_id, updated_by, {column}) 
-                VALUES (:incident_id, :user_id, :value)
-            """
-            cursor.execute(query, {'incident_id':incident_id, 'value':value, 'user_id':user_id})
-        else:
-            query = f"""
-                UPDATE incident_details 
-                SET {column} = :value, updated_by = :user_id, tireported_timemestamp = SYSTIMESTAMP
-                WHERE id = (SELECT id FROM incident_details WHERE rownum = 1 ORDER BY reported_time DESC)
-            """
-            cursor.execute(query, {'value':value, 'user_id':user_id})
-    conn.commit()
-    if value != '' and value != None and value != '<NA>':
-        st.rerun()
-
-
-def check_login_id_exists(login_id):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT COUNT(*) FROM users WHERE login_id=:1", (login_id,))
-    count = cursor.fetchone()[0]
-    cursor.close()
-    return count > 0
-
-
-############# AI ########## (shooter's description)
+############# AI ########## (summary of combined shooter's description)
 def fetch_shooter_desc():
     conn = get_db_connection()
     cursor = conn.cursor()
