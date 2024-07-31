@@ -20,14 +20,5 @@ def main():
         else:
             st.error("Please enter all the details for the registration.")
     
-    # st.write('## Registered Users')
-    # users = fetch_users()
-    # user_type_map = {
-    #     'G': 'General',
-    #     'A': 'Admin'
-    # }
-    # for usr in users:
-    #     st.write(f"LoginID: {usr[0]}, User Type: {user_type_map[usr[0]]}, Name: {usr[1]}, Phone Number: {usr[2]}")
-
 if __name__ == '__main__':
     main()

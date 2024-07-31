@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
 import time
+from datetime import datetime
 
 def main():
     if "user" not in st.session_state:
@@ -37,7 +38,9 @@ def main():
                                 msg = msg
                                 break
                         if msg:
-                            highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({msg[0]})</span>'
+                            original_datetime = datetime.strptime(str(msg[0]), "%Y-%m-%d %H:%M:%S.%f")
+                            converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({converted_datetime_str})</span>'
                             st.markdown(highlighted_msg_text, unsafe_allow_html=True)
                         else:
                             st.write("No messages available.")
@@ -52,7 +55,9 @@ def main():
                         st.header("Send Final Shooter's Description")
                         final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
                         # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
-                        highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {str(final_shooter_desc[1])})</span>'
+                        original_datetime = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S")
+                        converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                        highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {converted_datetime_str})</span>'
                         st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
                         # Download text file of shooter's descriptions + Instruction
                         data = fetch_shooter_desc()
@@ -133,8 +138,11 @@ def main():
                             msg = msg
                             break
                     if msg:
+                        original_datetime = datetime.strptime(str(msg[0]), "%Y-%m-%d %H:%M:%S.%f")
+                        converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
+
                         st.header('Alert Message from Admin')
-                        highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({msg[0]})</span>'
+                        highlighted_msg_text = f'<span style="background-color: #FDFD96; color: black;">{msg[3]} ({converted_datetime_str})</span>'
                         st.markdown(highlighted_msg_text, unsafe_allow_html=True)
                     else:
                         st.write("No messages available.")
@@ -142,8 +150,9 @@ def main():
                     # Shooter's Final Description
                     st.header('Updated Shooter Final Description')
                     final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
-                    # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
-                    highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {str(final_shooter_desc[1])})</span>'
+                    original_datetime = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S")
+                    converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                    highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {converted_datetime_str})</span>'
                     st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
 
                     # Shooter's Location
@@ -194,14 +203,14 @@ def main():
                 # Helper function to create buttons with state
                 def colored_button(label, key, selected):
                     button_html = f"""
-                    <button data-selected="{selected}" onclick="window.location.href += '&{key}={label.lower()}'; return false;">
+                    <button style="background-color: green; border: none; width: 50px; height: 40px; border-radius: 10%;" data-selected="{selected}" onclick="window.location.href += '&{key}={label.lower()}'; return false;">
                         {label}
                     </button>
                     """
                     st.markdown(button_html, unsafe_allow_html=True)
 
                 # Check if it is safe
-                st.header("Safe?")
+                st.header("Are you safe?")
                 col1, col2 = st.columns(2)
                 with col1:
                     if is_safe == 'Y':
@@ -220,7 +229,7 @@ def main():
 
                 if is_safe == 'N':
                     # Check if it is urgent
-                    st.header("Urgent?")
+                    st.header("Is it an urgent situation?")
                     col3, col4 = st.columns(2)
                     with col3:
                         if is_urgent == 'Y':

@@ -1,11 +1,11 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import pandas as pd
-import cx_Oracle
+import oracledb
 
 def get_db_connection():
-    dsn = cx_Oracle.makedsn("localhost", 1521, service_name="freepdb1")
-    conn = cx_Oracle.connect(user="user1", password="yoominchoi1234A", dsn=dsn)
+    dsn = oracledb.makedsn("localhost", 1521, service_name="freepdb1")
+    conn = oracledb.connect(user="user1", password="yoominchoi1234A", dsn=dsn)
     return conn
 
 @st.cache_data
@@ -199,7 +199,9 @@ def download_shooter_txt(data):
     if data:        
         instruction = """
                 1) Open a new terminal and run commands below to open Jupyter Notebook.
-                > ssh -L 8888:localhost:8888 -i <<ssh key file location>> opc@<<public IP Address>>
+                > ssh -L 8888:localhost:8888 -i <<ssh key file location>> opc@<<public IP Address>>\n
+                
+                > ssh -L 8888:localhost:8888 -i /Users/yoomchoi/Desktop/emergency_control_app/ssh-key-2024-06-27.key opc@207.211.166.86
                 
                 > jupyter-lab --no-browser --ip 0.0.0.0 --port 8888
 

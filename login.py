@@ -9,7 +9,6 @@ def main():
 
     if st.button("Login"):
         user = authenticate_user(login_id, password)
-        # user = authenticate_user('admin1', '0000')
         if user:
             st.session_state.user = user
             st.success("Logged in successfully!")
@@ -20,4 +19,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    # authenticate_user('admin1', '0000')
