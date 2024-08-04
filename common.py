@@ -1,11 +1,10 @@
 import streamlit as st
 import matplotlib.pyplot as plt
-import pandas as pd
 import oracledb
 
 def get_db_connection():
     dsn = oracledb.makedsn("localhost", 1521, service_name="freepdb1")
-    conn = oracledb.connect(user="user1", password="yoominchoi1234A", dsn=dsn)
+    conn = oracledb.connect(user="user1", password="<<password>>", dsn=dsn)
     return conn
 
 # User & Authentication (Register/Login)
@@ -92,11 +91,11 @@ def update_incident(incident_id, user_id, column, value):
         st.rerun()
 
 # User status update (is_safe, is_urgent)
-def update_user_status(user_id, column, value):
+def update_user(user_id, column, value):
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    if value in ['Y', 'N']:
+    if value in ['Y     ', 'N     ']:
         valid_columns = ['is_safe', 'is_urgent']
         if column not in valid_columns:
             raise ValueError("Invalid column name.")
@@ -106,12 +105,9 @@ def update_user_status(user_id, column, value):
             WHERE id = :user_id
         """
         cursor.execute(query, {'value': value, 'user_id': user_id})
-
     get_people_status()
-
     conn.commit()
     cursor.close()
-    # conn.close()
 
 def get_user_status(user_id):
     conn = get_db_connection()
@@ -198,8 +194,6 @@ def download_shooter_txt(data):
         instruction = """
                 1) Open a new terminal and run commands below to open Jupyter Notebook.
                 > ssh -L 8888:localhost:8888 -i <<ssh key file location>> opc@<<public IP Address>>\n
-                
-                > ssh -L 8888:localhost:8888 -i /Users/yoomchoi/Desktop/emergency_control_app/ssh-key-2024-06-27.key opc@207.211.166.86
                 
                 > jupyter-lab --no-browser --ip 0.0.0.0 --port 8888
 

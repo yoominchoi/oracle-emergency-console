@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user_status, get_user_status, get_people_status, get_safe_status_pie_chart
+from common import update_final_shooter_desc, fetch_final_shooter_desc, fetch_incidents, fetch_incident_details, fetch_shooter_desc, download_shooter_txt, update_incident, fetch_incident_details, update_user, get_user_status, get_people_status, get_safe_status_pie_chart
 import time
 from datetime import datetime
 
@@ -26,7 +26,7 @@ def main():
             if selected_incident_id:
                 incident_details = fetch_incident_details(selected_incident_id)
                 if incident_details:
-                    admin_col1, admin_col2 = st.columns(2)                    
+                    admin_col1, admin_col2 = st.columns(2)
                     
                     with admin_col1:
                         # Send Alert Messages to Users
@@ -52,12 +52,11 @@ def main():
                             st.success("Message sent!")
                         
                         # Shooter's Final Description
-                        st.header("Send Final Shooter's Description")
+                        st.header("Send a Summary of the Shooter")
                         final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
-                        # st.write(final_shooter_desc[0] + ' (Updated: '+ str(final_shooter_desc[1])+ ')')
-                        original_datetime = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S")
+                        original_datetime = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S.%f")
                         converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                        highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {converted_datetime_str})</span>'
+                        highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} ({converted_datetime_str})</span>'
                         st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
                         # Download text file of shooter's descriptions + Instruction
                         data = fetch_shooter_desc()
@@ -150,9 +149,9 @@ def main():
                     # Shooter's Final Description
                     st.header('Updated Shooter Final Description')
                     final_shooter_desc = fetch_final_shooter_desc(selected_incident_id)
-                    original_datetime = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S")
-                    converted_datetime_str = original_datetime.strftime("%Y-%m-%d %H:%M:%S")
-                    highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} \n(Updated: {converted_datetime_str})</span>'
+                    original_datetime_shooter_desc = datetime.strptime(str(final_shooter_desc[1]), "%Y-%m-%d %H:%M:%S.%f")
+                    converted_datetime_str_shooter_desc = original_datetime_shooter_desc.strftime("%Y-%m-%d %H:%M:%S")
+                    highlighted_final_shooter_desc = f'<span style="background-color: #FDFD96; color: black;">{final_shooter_desc[0]} ({str(converted_datetime_str_shooter_desc)})</span>'
                     st.markdown(highlighted_final_shooter_desc, unsafe_allow_html=True)
 
                     # Shooter's Location
@@ -210,45 +209,47 @@ def main():
                     st.markdown(button_html, unsafe_allow_html=True)
 
                 # Check if it is safe
-                st.header("Are you safe?")
+                st.header("Are you Safe?")
                 col1, col2 = st.columns(2)
                 with col1:
-                    if is_safe == 'Y':
+                    if is_safe == 'Y     ':
                         colored_button("Yes", key="safe_yes", selected="true")
                     else:
                         if st.button("Yes", key="safe_yes"):
-                            update_user_status(user[0], "is_safe", 'Y')
+                            update_user(user[0], "is_safe", 'Y     ')
                             st.rerun()
                 with col2:
-                    if is_safe == 'N':
+                    if is_safe == 'N     ':
                         colored_button("No", key="safe_no", selected="true")
                     else:
                         if st.button("No", key="safe_no"):
-                            update_user_status(user[0], "is_safe", 'N')
+                            update_user(user[0], "is_safe", 'N     ')
                             st.rerun()
-
-                if is_safe == 'N':
-                    # Check if it is urgent
-                    st.header("Is it an urgent situation?")
-                    col3, col4 = st.columns(2)
-                    with col3:
-                        if is_urgent == 'Y':
-                            colored_button("Yes", key="urgent_yes", selected="true")
-                        else:
-                            if st.button("Yes", key="urgent_yes"):
-                                update_user_status(user[0], "is_urgent", 'Y')
-                                st.rerun()
-                    with col4:
-                        if is_urgent == 'N':
-                            colored_button("No", key="urgent_no", selected="true")
-                        else:
-                            if st.button("No", key="urgent_no"):
-                                update_user_status(user[0], "is_urgent", 'N')
-                                st.rerun()
+                    print(is_safe)
+                    print(bool(is_safe == 'N     '))
+            if is_safe == 'N     ':
+                # Check if it is urgent
+                st.header("Are you in urgent situation?")
+                col3, col4 = st.columns(2)
+                with col3:
+                    if is_urgent == 'Y     ':
+                        colored_button("Yes", key="urgent_yes", selected="true")
+                    else:
+                        if st.button("Yes", key="urgent_yes"):
+                            update_user(user[0], "is_urgent", 'Y     ')
+                            st.rerun()
+                with col4:
+                    if is_urgent == 'N     ':
+                        colored_button("No", key="urgent_no", selected="true")
+                    else:
+                        if st.button("No", key="urgent_no"):
+                            update_user(user[0], "is_urgent", 'N     ')
+                            st.rerun()
             else:
                 st.sidebar.write("No incident details available.")
         else:
                 st.sidebar.write("No incidents available.")
+
 
     time.sleep(10)
     st.rerun()
