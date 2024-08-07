@@ -233,3 +233,4 @@ def fetch_final_shooter_desc(incident_id):
     rows = cursor.fetchone()
     cursor.close()
     return rows
+ 
